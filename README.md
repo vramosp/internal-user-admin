@@ -100,6 +100,102 @@ CREATE POLICY "Users can read own data"
 npm run dev
 ```
 
+## Authentication Setup
+
+1. Configure Supabase Auth:
+```typescript
+// src/lib/supabase.ts
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+```
+
+2. Create Auth Hook:
+```typescript
+// src/hooks/useAuth.ts
+import { useEffect, useState } from 'react';
+import { Session, User } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase';
+
+export function useAuth() {
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  return { session, user, loading };
+}
+```
+
+3. Protect Routes:
+```typescript
+// src/components/ProtectedRoute.tsx
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+
+export function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { session, loading } = useAuth();
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!session) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+}
+```
+
+4. Set up Router:
+```typescript
+// src/App.tsx
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { LoginPage } from './pages/LoginPage';
+import { Dashboard } from './components/Dashboard';
+import { ProtectedRoute } from './components/ProtectedRoute';
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/dashboard/*"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+```
+
 ## Environment Setup
 
 1. Development:
@@ -117,27 +213,22 @@ npm run build
 npm run preview
 ```
 
-## Deployment
-
-1. Push your code to GitHub
-2. Click the "Deploy to Netlify" button above
-3. Connect your GitHub repository
-4. Configure environment variables:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-5. Deploy!
-
 ## Project Structure
 
 ```
 ├── src/
 │   ├── components/      # React components
-│   ├── data/           # Sample data and constants
-│   ├── types/          # TypeScript type definitions
-│   ├── App.tsx         # Main application component
-│   └── main.tsx        # Application entry point
-├── public/             # Static assets
-└── package.json        # Project dependencies
+│   │   └── ProtectedRoute.tsx  # Route protection
+│   ├── hooks/          # Custom hooks
+│   │   └── useAuth.ts  # Authentication hook
+│   ├── lib/           # Utilities
+│   │   └── supabase.ts # Supabase client
+│   ├── pages/         # Page components
+│   ├── types/         # TypeScript definitions
+│   ├── App.tsx        # Main application
+│   └── main.tsx       # Entry point
+├── public/            # Static assets
+└── package.json       # Dependencies
 ```
 
 ## License
