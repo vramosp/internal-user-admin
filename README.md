@@ -100,6 +100,23 @@ CREATE POLICY "Users can read own data"
 npm run dev
 ```
 
+## Environment Setup
+
+1. Development:
+```bash
+npm run dev
+```
+
+2. Production Build:
+```bash
+npm run build
+```
+
+3. Preview Production Build:
+```bash
+npm run preview
+```
+
 ## Authentication Setup
 
 1. Configure Supabase Auth:
@@ -194,23 +211,6 @@ function App() {
     </BrowserRouter>
   );
 }
-```
-
-## Environment Setup
-
-1. Development:
-```bash
-npm run dev
-```
-
-2. Production Build:
-```bash
-npm run build
-```
-
-3. Preview Production Build:
-```bash
-npm run preview
 ```
 
 ## Project Structure

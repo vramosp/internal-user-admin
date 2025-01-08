@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signInWithSSO } from '../lib/supabase';
 import { Loader2 } from 'lucide-react';
@@ -7,11 +7,6 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-
-  // Auto-login for demo
-  useEffect(() => {
-    navigate('/dashboard');
-  }, [navigate]);
 
   const handleSSO = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,6 +19,10 @@ export function LoginForm() {
       setError(err instanceof Error ? err.message : 'An error occurred');
       setLoading(false);
     }
+  };
+
+  const handleSkipLogin = () => {
+    navigate('/dashboard');
   };
 
   return (
@@ -48,6 +47,15 @@ export function LoginForm() {
           'Sign in with SSO'
         )}
       </button>
+
+      <div className="text-center">
+        <button
+          onClick={handleSkipLogin}
+          className="text-sm text-blue-600 hover:text-blue-800"
+        >
+          Skip login for demo
+        </button>
+      </div>
     </div>
   );
 }
